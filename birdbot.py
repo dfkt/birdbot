@@ -1,6 +1,6 @@
 import tweepy
-import urllib
 from bs4 import BeautifulSoup
+import urllib
 import os
 
 # auth
@@ -17,31 +17,33 @@ api = tweepy.API(auth)
 url = "https://birdshow.dfkt.tk/getimage.php"
 html = urllib.urlopen(url).read()
 soup = BeautifulSoup(html, "html.parser")
-for script in soup(["script", "style"]):
-    script.extract()
-
 link = "https://birdshow.dfkt.tk/" + soup.get_text()
 #print(link)
 
 #download image
-urllib.urlretrieve(link, "./img.jpg")
+download_img = "./img.jpg"
+urllib.urlretrieve(link, download_img)
 
 #post tweet
-download = "./img.jpg"
 status = "#birdbot"
-api.update_with_media(download, status=status)
+api.update_with_media(download_img, status=status)
 
 #delete downloaded image
-os.remove("./img.jpg")
+os.remove(download_img)
 
-#follow back
-for follower in tweepy.Cursor(api.followers).items(2):
-    follower.follow()
-    #print follower.screen_name
+#followers/friends
+#screen_name = api.me().screen_name
+bot = api.me().id
+followers = api.followers_ids(bot)
+friends = api.friends_ids(bot)
 
 #unfollow back
-followers = api.followers_ids(SCREEN_NAME)
-friends = api.friends_ids(SCREEN_NAME)
-for f in friends:
-    if f not in followers:
-        api.destroy_friendship(f)
+for friend in friends:
+    if friend not in followers:
+        api.destroy_friendship(friend)
+
+#follow back
+for follower in followers:
+    if follower not in friends:
+        api.create_friendship(follower)
+        friends.append(follower)
